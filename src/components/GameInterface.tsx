@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Share2 } from 'lucide-react';
+import { RotateCcw, Share2, Info } from 'lucide-react';
 import { Player, GameAttempt } from '@/pages/Index';
 import { ShareModal } from '@/components/ShareModal';
 import { CircleCanvas } from '@/components/CircleCanvas';
@@ -24,7 +24,55 @@ export const GameInterface: React.FC<GameInterfaceProps> = ({
   const [currentScore, setCurrentScore] = useState(0);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [bestAttemptScore, setBestAttemptScore] = useState(0);
+  const [finalScore, setFinalScore] = useState(0);
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
+
+  const calculateFinalScore = (attempts: GameAttempt[]): number => {
+    if (attempts.length === 0) return 0;
+
+    // Get the highest score
+    const highestScore = Math.max(...attempts.map(a => a.score));
+    
+    // Calculate average score
+    const averageScore = attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length;
+    
+    // Calculate consistency (lower standard deviation = higher consistency)
+    const variance = attempts.reduce((sum, a) => sum + Math.pow(a.score - averageScore, 2), 0) / attempts.length;
+    const standardDeviation = Math.sqrt(variance);
+    const consistencyScore = Math.max(0, 100 - standardDeviation * 2);
+    
+    // Bonus for using fewer attempts (more points if you get it right early)
+    const attemptBonus = attempts.length === 1 ? 20 : attempts.length === 2 ? 10 : 0;
+    
+    // Final score calculation (weighted formula)
+    const finalCalculation = (
+      highestScore * 0.4 +           // 40% highest score
+      averageScore * 0.3 +           // 30% average performance
+      consistencyScore * 0.2 +       // 20% consistency
+      attemptBonus                   // Bonus for fewer attempts
+    );
+    
+    return Math.round(Math.min(100, finalCalculation));
+  };
+
+  const getScoreBreakdown = (attempts: GameAttempt[]) => {
+    if (attempts.length === 0) return null;
+
+    const highestScore = Math.max(...attempts.map(a => a.score));
+    const averageScore = attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length;
+    const variance = attempts.reduce((sum, a) => sum + Math.pow(a.score - averageScore, 2), 0) / attempts.length;
+    const standardDeviation = Math.sqrt(variance);
+    const consistencyScore = Math.max(0, 100 - standardDeviation * 2);
+    const attemptBonus = attempts.length === 1 ? 20 : attempts.length === 2 ? 10 : 0;
+
+    return {
+      highestScore,
+      averageScore: Math.round(averageScore),
+      consistencyScore: Math.round(consistencyScore),
+      attemptBonus,
+      attempts: attempts.length
+    };
+  };
 
   const resetGame = () => {
     setCurrentAttempt(1);
@@ -32,7 +80,8 @@ export const GameInterface: React.FC<GameInterfaceProps> = ({
     setCurrentScore(0);
     setGameCompleted(false);
     setGameHistory([]);
-    setBestAttemptScore(0);
+    setFinalScore(0);
+    setShowScoreBreakdown(false);
   };
 
   const handleCircleComplete = (score: number) => {
@@ -44,14 +93,12 @@ export const GameInterface: React.FC<GameInterfaceProps> = ({
     const updatedHistory = [...gameHistory, newAttempt];
     setGameHistory(updatedHistory);
     setCurrentScore(score);
-    
-    if (score > bestAttemptScore) {
-      setBestAttemptScore(score);
-      onScoreUpdate(score);
-    }
 
     if (currentAttempt >= 3) {
+      const calculatedFinalScore = calculateFinalScore(updatedHistory);
+      setFinalScore(calculatedFinalScore);
       setGameCompleted(true);
+      onScoreUpdate(calculatedFinalScore);
     } else {
       setCurrentAttempt(currentAttempt + 1);
     }
@@ -66,12 +113,14 @@ export const GameInterface: React.FC<GameInterfaceProps> = ({
   };
 
   const getScoreMessage = (score: number) => {
-    if (score >= 95) return 'PERFECT!';
-    if (score >= 90) return 'EXCELLENT!';
-    if (score >= 75) return 'GREAT!';
-    if (score >= 50) return 'GOOD!';
-    return 'KEEP TRYING!';
+    if (score >= 95) return 'PERFECT MASTER!';
+    if (score >= 90) return 'CIRCLE LEGEND!';
+    if (score >= 75) return 'GREAT WORK!';
+    if (score >= 50) return 'GOOD EFFORT!';
+    return 'KEEP PRACTICING!';
   };
+
+  const breakdown = getScoreBreakdown(gameHistory);
 
   return (
     <div className="bg-black/40 backdrop-blur-lg rounded-3xl p-6 border border-purple-500/30">
@@ -114,10 +163,46 @@ export const GameInterface: React.FC<GameInterfaceProps> = ({
         ) : (
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-white">Game Complete!</h2>
-            <p className={`text-3xl font-bold ${getScoreColor(bestAttemptScore)}`}>
-              {getScoreMessage(bestAttemptScore)}
+            <p className={`text-3xl font-bold ${getScoreColor(finalScore)}`}>
+              {getScoreMessage(finalScore)}
             </p>
-            <p className="text-gray-400">Best Score: {bestAttemptScore}/100</p>
+            <div className="bg-purple-500/20 rounded-lg p-4 border border-purple-500/30">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-gray-300">Final Score:</span>
+                <span className={`text-2xl font-bold ${getScoreColor(finalScore)}`}>
+                  {finalScore}/100
+                </span>
+                <Button
+                  onClick={() => setShowScoreBreakdown(!showScoreBreakdown)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-purple-400 hover:text-white"
+                >
+                  <Info className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {showScoreBreakdown && breakdown && (
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="text-gray-300 font-mono border-b border-purple-500/30 pb-2">
+                    <strong>Score Calculation:</strong>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-gray-300">
+                    <span>Highest Score (40%):</span>
+                    <span className="text-cyan-400">{breakdown.highestScore} pts</span>
+                    <span>Average Score (30%):</span>
+                    <span className="text-cyan-400">{breakdown.averageScore} pts</span>
+                    <span>Consistency (20%):</span>
+                    <span className="text-cyan-400">{breakdown.consistencyScore} pts</span>
+                    <span>Attempt Bonus:</span>
+                    <span className="text-cyan-400">+{breakdown.attemptBonus} pts</span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-purple-500/20">
+                    Formula: (Highest×0.4 + Average×0.3 + Consistency×0.2 + Bonus)
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -131,7 +216,7 @@ export const GameInterface: React.FC<GameInterfaceProps> = ({
       />
 
       {/* Score Display */}
-      {currentScore > 0 && (
+      {currentScore > 0 && !gameCompleted && (
         <div className="text-center mt-4">
           <div className={`text-4xl font-bold ${getScoreColor(currentScore)} animate-scale-in`}>
             {currentScore}/100
@@ -177,7 +262,7 @@ export const GameInterface: React.FC<GameInterfaceProps> = ({
       {showShareModal && (
         <ShareModal
           player={player}
-          bestScore={bestAttemptScore}
+          bestScore={finalScore}
           attempts={gameHistory}
           onClose={() => setShowShareModal(false)}
         />

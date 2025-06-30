@@ -1,7 +1,6 @@
-
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Download } from 'lucide-react';
+import { X, Download, Share2 } from 'lucide-react';
 import { Player, GameAttempt } from '@/pages/Index';
 
 interface ShareModalProps {
@@ -11,48 +10,24 @@ interface ShareModalProps {
   onClose: () => void;
 }
 
-const countries = {
-  'US': { name: 'United States', flag: '🇺🇸' },
-  'GB': { name: 'United Kingdom', flag: '🇬🇧' },
-  'DE': { name: 'Germany', flag: '🇩🇪' },
-  'FR': { name: 'France', flag: '🇫🇷' },
-  'JP': { name: 'Japan', flag: '🇯🇵' },
-  'CA': { name: 'Canada', flag: '🇨🇦' },
-  'AU': { name: 'Australia', flag: '🇦🇺' },
-  'BR': { name: 'Brazil', flag: '🇧🇷' },
-  'IN': { name: 'India', flag: '🇮🇳' },
-  'CN': { name: 'China', flag: '🇨🇳' },
-  'ES': { name: 'Spain', flag: '🇪🇸' },
-  'IT': { name: 'Italy', flag: '🇮🇹' },
-};
-
-export const ShareModal: React.FC<ShareModalProps> = ({
-  player,
-  bestScore,
-  attempts,
-  onClose,
-}) => {
+export const ShareModal: React.FC<ShareModalProps> = ({ player, bestScore, attempts, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const countryInfo = countries[player.country as keyof typeof countries];
 
-  useEffect(() => {
-    generateShareCard();
-  }, []);
-
-  const generateShareCard = () => {
+  const generateShareImage = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return '';
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) return '';
 
+    // Set canvas size
     canvas.width = 800;
     canvas.height = 600;
 
-    // Background gradient
+    // Create gradient background
     const gradient = ctx.createLinearGradient(0, 0, 800, 600);
     gradient.addColorStop(0, '#0f0f23');
-    gradient.addColorStop(0.5, '#4c1d95');
+    gradient.addColorStop(0.5, '#1e1b4b');
     gradient.addColorStop(1, '#0f0f23');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 800, 600);
@@ -61,210 +36,188 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     ctx.globalAlpha = 0.1;
     ctx.fillStyle = '#a855f7';
     ctx.beginPath();
-    ctx.arc(150, 150, 100, 0, 2 * Math.PI);
+    ctx.arc(150, 150, 80, 0, 2 * Math.PI);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(650, 450, 80, 0, 2 * Math.PI);
+    ctx.arc(650, 450, 100, 0, 2 * Math.PI);
     ctx.fill();
     ctx.globalAlpha = 1;
 
     // Title
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 42px monospace';
+    ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Perfect Circle', 400, 70);
+    ctx.fillText('Perfect Circle Challenge', 400, 80);
 
     // Subtitle
     ctx.fillStyle = '#a855f7';
-    ctx.font = '20px monospace';
-    ctx.fillText('Challenge Result', 400, 100);
-
-    // Load and draw profile picture
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      // Draw circular profile picture
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(150, 180, 40, 0, 2 * Math.PI);
-      ctx.clip();
-      ctx.drawImage(img, 110, 140, 80, 80);
-      ctx.restore();
-      
-      // Profile picture border
-      ctx.strokeStyle = '#a855f7';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(150, 180, 40, 0, 2 * Math.PI);
-      ctx.stroke();
-    };
-    img.src = player.profilePicture;
+    ctx.font = '24px Arial';
+    ctx.fillText('Final Score Results', 400, 120);
 
     // Player info section
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 28px monospace';
+    ctx.font = 'bold 32px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText(player.username, 220, 170);
-    
-    ctx.font = '20px monospace';
-    ctx.fillText(`${countryInfo?.flag} ${countryInfo?.name}`, 220, 200);
+    ctx.fillText(`Player: ${player.username}`, 80, 180);
 
-    // Score section with better styling
+    // Country flag and name
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#d1d5db';
+    ctx.fillText(`Country: ${player.country}`, 80, 220);
+
+    // Score display
+    ctx.fillStyle = bestScore >= 90 ? '#10b981' : bestScore >= 75 ? '#f59e0b' : bestScore >= 50 ? '#f97316' : '#ef4444';
+    ctx.font = 'bold 72px Arial';
     ctx.textAlign = 'center';
-    
-    // Score background
-    ctx.fillStyle = 'rgba(168, 85, 247, 0.2)';
-    ctx.fillRect(300, 240, 200, 100);
-    ctx.strokeStyle = '#a855f7';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(300, 240, 200, 100);
-
-    // Score text
-    ctx.fillStyle = bestScore >= 90 ? '#10b981' : bestScore >= 75 ? '#f59e0b' : '#ef4444';
-    ctx.font = 'bold 48px monospace';
-    ctx.fillText(`${bestScore}`, 400, 280);
+    ctx.fillText(`${bestScore}`, 400, 320);
     
     ctx.fillStyle = '#ffffff';
-    ctx.font = '16px monospace';
-    ctx.fillText('/100', 400, 300);
+    ctx.font = '32px Arial';
+    ctx.fillText('Final Score', 400, 360);
 
-    ctx.fillStyle = '#a855f7';
-    ctx.font = 'bold 18px monospace';
-    ctx.fillText('BEST SCORE', 400, 325);
-
-    // Attempts section with better layout
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px monospace';
-    ctx.fillText('Attempts:', 400, 380);
-
+    // Attempts breakdown
+    ctx.fillStyle = '#d1d5db';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Attempts:', 80, 420);
+    
     attempts.forEach((attempt, index) => {
-      const x = 280 + (index * 80);
-      const y = 430;
-      
-      // Attempt background
-      ctx.fillStyle = 'rgba(168, 85, 247, 0.15)';
-      ctx.fillRect(x - 35, y - 35, 70, 70);
-      
-      // Attempt border
-      ctx.strokeStyle = '#a855f7';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x - 35, y - 35, 70, 70);
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(`#${attempt.attempt}`, x, y - 10);
-      
-      // Score color based on value
-      ctx.fillStyle = attempt.score >= 90 ? '#10b981' : attempt.score >= 75 ? '#f59e0b' : '#ef4444';
-      ctx.font = 'bold 16px monospace';
-      ctx.fillText(`${attempt.score}`, x, y + 10);
+      ctx.fillStyle = '#a855f7';
+      ctx.fillText(`${attempt.attempt}: ${attempt.score} pts`, 80 + (index * 150), 450);
     });
 
-    // Footer with better styling
-    ctx.fillStyle = '#6b7280';
-    ctx.font = '16px monospace';
+    // Score calculation note
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '16px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Can you beat this score?', 400, 530);
-    
-    ctx.fillStyle = '#a855f7';
-    ctx.font = 'bold 14px monospace';
-    ctx.fillText('Perfect Circle Game', 400, 555);
-  };
+    ctx.fillText('Score based on: Highest Score (40%) + Average (30%) + Consistency (20%) + Attempt Bonus', 400, 520);
 
-  const downloadImage = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    // Branding
+    ctx.fillStyle = '#6366f1';
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('perfectcircle.game', 400, 560);
 
-    const link = document.createElement('a');
-    link.download = `perfect-circle-${player.username}-${bestScore}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
+    return canvas.toDataURL('image/png');
   };
 
   const shareToTwitter = () => {
-    const text = `I just scored ${bestScore}/100 in the Perfect Circle Challenge! 🎯 Can you beat my score? ${countryInfo?.flag}`;
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const imageData = generateShareImage();
+    const text = `I scored ${bestScore}/100 in the Perfect Circle Challenge! 🎯\n\nCan you draw a better circle?\n\n#PerfectCircle #GameChallenge`;
+    
+    // Create a link element to download the image
+    const link = document.createElement('a');
+    link.download = 'perfect-circle-score.png';
+    link.href = imageData;
+    link.click();
+    
+    // Open Twitter with the text
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(twitterUrl, '_blank');
   };
 
   const shareToInstagram = () => {
-    // Instagram doesn't support direct sharing via URL, so we'll provide instructions
-    downloadImage();
-    alert('Image downloaded! You can now upload it to your Instagram story or post.');
+    const imageData = generateShareImage();
+    
+    // Create a link element to download the image
+    const link = document.createElement('a');
+    link.download = 'perfect-circle-score.png';
+    link.href = imageData;
+    link.click();
+    
+    // Show instructions
+    alert('Image downloaded! Open Instagram and upload this image to share your score.');
   };
 
-  const copyToClipboard = () => {
-    const text = `🎯 I scored ${bestScore}/100 in the Perfect Circle Challenge! ${countryInfo?.flag}\n\nCan you draw a better circle? Try it now!`;
-    navigator.clipboard.writeText(text);
-    alert('Text copied to clipboard!');
+  const downloadImage = () => {
+    const imageData = generateShareImage();
+    const link = document.createElement('a');
+    link.download = 'perfect-circle-score.png';
+    link.href = imageData;
+    link.click();
+  };
+
+  const getScoreMessage = (score: number) => {
+    if (score >= 95) return 'PERFECT MASTER!';
+    if (score >= 90) return 'CIRCLE LEGEND!';
+    if (score >= 75) return 'GREAT ARTIST!';
+    if (score >= 50) return 'GOOD EFFORT!';
+    return 'KEEP PRACTICING!';
   };
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-black/90 rounded-3xl p-6 max-w-2xl w-full border border-purple-500/30 relative">
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          size="sm"
-          className="absolute top-4 right-4 text-gray-400 hover:text-white"
-        >
-          <X className="w-5 h-5" />
-        </Button>
+      <div className="bg-black/90 backdrop-blur-lg rounded-3xl p-8 max-w-md w-full border border-purple-500/30 shadow-2xl animate-scale-in">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+            Share Your Score
+          </h2>
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="sm"
+            className="text-gray-400 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
 
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">Share Your Score!</h2>
-          <p className="text-gray-400">Show off your circle-drawing skills</p>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <img
+              src={player.profilePicture}
+              alt={player.username}
+              className="w-16 h-16 rounded-full border-2 border-purple-500"
+            />
+            <div>
+              <h3 className="text-xl font-bold text-white">{player.username}</h3>
+              <p className="text-gray-400">{player.country}</p>
+            </div>
+          </div>
+          
+          <div className="bg-purple-500/20 rounded-lg p-4 border border-purple-500/30 mb-4">
+            <div className="text-4xl font-bold text-cyan-400 mb-2">{bestScore}/100</div>
+            <div className="text-lg text-white font-mono">{getScoreMessage(bestScore)}</div>
+            <div className="text-sm text-gray-400 mt-2">Final Score</div>
+          </div>
+
+          <div className="text-sm text-gray-400 mb-4">
+            Based on {attempts.length} attempt{attempts.length > 1 ? 's' : ''}
+          </div>
         </div>
 
-        {/* Preview Canvas */}
-        <div className="flex justify-center mb-6">
-          <canvas
-            ref={canvasRef}
-            className="border border-purple-500/30 rounded-lg max-w-full h-auto"
-            style={{ maxHeight: '300px' }}
-          />
-        </div>
-
-        {/* Share Buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="space-y-3">
           <Button
             onClick={shareToTwitter}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
           >
-            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-            </svg>
-            Twitter
+            <Share2 className="w-4 h-4 mr-2" />
+            Share on Twitter
           </Button>
-
+          
           <Button
             onClick={shareToInstagram}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
           >
-            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-            </svg>
-            Instagram
+            <Share2 className="w-4 h-4 mr-2" />
+            Share on Instagram
           </Button>
-
+          
           <Button
             onClick={downloadImage}
             variant="outline"
-            className="border-purple-500/50 text-purple-400 hover:bg-purple-500/20"
+            className="w-full border-purple-500/50 text-purple-400 hover:bg-purple-500/20"
           >
             <Download className="w-4 h-4 mr-2" />
-            Download
-          </Button>
-
-          <Button
-            onClick={copyToClipboard}
-            variant="outline"
-            className="border-purple-500/50 text-purple-400 hover:bg-purple-500/20"
-          >
-            📋 Copy
+            Download Image
           </Button>
         </div>
+
+        <canvas
+          ref={canvasRef}
+          className="hidden"
+          width={800}
+          height={600}
+        />
       </div>
     </div>
   );
