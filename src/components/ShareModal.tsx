@@ -57,62 +57,119 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 800, 600);
 
+    // Add decorative circles
+    ctx.globalAlpha = 0.1;
+    ctx.fillStyle = '#a855f7';
+    ctx.beginPath();
+    ctx.arc(150, 150, 100, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(650, 450, 80, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
     // Title
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 48px monospace';
+    ctx.font = 'bold 42px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('Perfect Circle', 400, 80);
+    ctx.fillText('Perfect Circle', 400, 70);
 
     // Subtitle
     ctx.fillStyle = '#a855f7';
-    ctx.font = '24px monospace';
-    ctx.fillText('Challenge Result', 400, 120);
+    ctx.font = '20px monospace';
+    ctx.fillText('Challenge Result', 400, 100);
+
+    // Load and draw profile picture
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      // Draw circular profile picture
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(150, 180, 40, 0, 2 * Math.PI);
+      ctx.clip();
+      ctx.drawImage(img, 110, 140, 80, 80);
+      ctx.restore();
+      
+      // Profile picture border
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(150, 180, 40, 0, 2 * Math.PI);
+      ctx.stroke();
+    };
+    img.src = player.profilePicture;
 
     // Player info section
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px monospace';
+    ctx.font = 'bold 28px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(`Player: ${player.username}`, 100, 200);
+    ctx.fillText(player.username, 220, 170);
     
-    ctx.font = '24px monospace';
-    ctx.fillText(`Country: ${countryInfo?.flag} ${countryInfo?.name}`, 100, 240);
+    ctx.font = '20px monospace';
+    ctx.fillText(`${countryInfo?.flag} ${countryInfo?.name}`, 220, 200);
 
-    // Score section
+    // Score section with better styling
     ctx.textAlign = 'center';
+    
+    // Score background
+    ctx.fillStyle = 'rgba(168, 85, 247, 0.2)';
+    ctx.fillRect(300, 240, 200, 100);
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(300, 240, 200, 100);
+
+    // Score text
     ctx.fillStyle = bestScore >= 90 ? '#10b981' : bestScore >= 75 ? '#f59e0b' : '#ef4444';
-    ctx.font = 'bold 64px monospace';
-    ctx.fillText(`${bestScore}/100`, 400, 320);
+    ctx.font = 'bold 48px monospace';
+    ctx.fillText(`${bestScore}`, 400, 280);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '16px monospace';
+    ctx.fillText('/100', 400, 300);
 
     ctx.fillStyle = '#a855f7';
-    ctx.font = '24px monospace';
-    ctx.fillText('BEST SCORE', 400, 360);
+    ctx.font = 'bold 18px monospace';
+    ctx.fillText('BEST SCORE', 400, 325);
 
-    // Attempts section
+    // Attempts section with better layout
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 24px monospace';
-    ctx.fillText('Attempts:', 400, 420);
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText('Attempts:', 400, 380);
 
     attempts.forEach((attempt, index) => {
-      const x = 250 + (index * 100);
-      const y = 480;
+      const x = 280 + (index * 80);
+      const y = 430;
       
-      // Attempt box
+      // Attempt background
+      ctx.fillStyle = 'rgba(168, 85, 247, 0.15)';
+      ctx.fillRect(x - 35, y - 35, 70, 70);
+      
+      // Attempt border
       ctx.strokeStyle = '#a855f7';
       ctx.lineWidth = 2;
-      ctx.strokeRect(x - 40, y - 30, 80, 60);
+      ctx.strokeRect(x - 35, y - 35, 70, 70);
       
       ctx.fillStyle = '#ffffff';
-      ctx.font = '16px monospace';
+      ctx.font = 'bold 14px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(`#${attempt.attempt}`, x, y - 10);
+      
+      // Score color based on value
+      ctx.fillStyle = attempt.score >= 90 ? '#10b981' : attempt.score >= 75 ? '#f59e0b' : '#ef4444';
+      ctx.font = 'bold 16px monospace';
       ctx.fillText(`${attempt.score}`, x, y + 10);
     });
 
-    // Footer
+    // Footer with better styling
     ctx.fillStyle = '#6b7280';
-    ctx.font = '18px monospace';
+    ctx.font = '16px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('Play at Perfect Circle Game', 400, 550);
+    ctx.fillText('Can you beat this score?', 400, 530);
+    
+    ctx.fillStyle = '#a855f7';
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText('Perfect Circle Game', 400, 555);
   };
 
   const downloadImage = () => {
