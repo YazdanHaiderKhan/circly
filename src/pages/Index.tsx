@@ -1,9 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Onboarding } from '@/components/Onboarding';
 import { GameInterface } from '@/components/GameInterface';
 import { Leaderboard } from '@/components/Leaderboard';
+import { Settings } from '@/components/Settings';
 import { AdSpace } from '@/components/AdSpace';
+import { Button } from '@/components/ui/button';
+import { Settings as SettingsIcon } from 'lucide-react';
 
 export interface Player {
   id: string;
@@ -24,6 +26,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<'compete' | 'leaderboard'>('compete');
   const [players, setPlayers] = useState<Player[]>([]);
   const [gameHistory, setGameHistory] = useState<GameAttempt[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     // Load players from localStorage
@@ -62,6 +65,11 @@ const Index = () => {
     }
   };
 
+  const handleUpdatePlayer = (updatedPlayer: Player) => {
+    setCurrentPlayer(updatedPlayer);
+    savePlayer(updatedPlayer);
+  };
+
   if (!currentPlayer) {
     return <Onboarding onComplete={setCurrentPlayer} />;
   }
@@ -77,13 +85,23 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-6 relative z-10">
         {/* Header */}
-        <header className="text-center mb-8">
+        <header className="text-center mb-8 relative">
           <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-fade-in">
             Perfect Circle
           </h1>
           <p className="text-lg md:text-xl text-gray-300 mt-2 font-mono">
             Draw the perfect circle and climb the leaderboard!
           </p>
+          
+          {/* Settings Button */}
+          <Button
+            onClick={() => setShowSettings(true)}
+            variant="ghost"
+            size="sm"
+            className="absolute top-0 right-0 text-purple-400 hover:text-white hover:bg-purple-500/20"
+          >
+            <SettingsIcon className="w-5 h-5" />
+          </Button>
         </header>
 
         {/* Ad Space Top */}
@@ -145,6 +163,15 @@ const Index = () => {
         {/* Bottom Ad Space */}
         <AdSpace position="bottom" />
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <Settings
+          player={currentPlayer}
+          onUpdatePlayer={handleUpdatePlayer}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </div>
   );
 };
