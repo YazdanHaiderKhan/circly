@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Download, Share2 } from 'lucide-react';
@@ -13,95 +14,144 @@ interface ShareModalProps {
 export const ShareModal: React.FC<ShareModalProps> = ({ player, bestScore, attempts, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const generateShareImage = () => {
+  const generateShareImage = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return '';
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
 
-    // Set canvas size
-    canvas.width = 800;
-    canvas.height = 600;
+    // Set canvas size to match preview
+    canvas.width = 400;
+    canvas.height = 500;
 
-    // Create gradient background
-    const gradient = ctx.createLinearGradient(0, 0, 800, 600);
-    gradient.addColorStop(0, '#0f0f23');
-    gradient.addColorStop(0.5, '#1e1b4b');
-    gradient.addColorStop(1, '#0f0f23');
+    // Create dark background like in preview
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, 400, 500);
+
+    // Add subtle gradient overlay
+    const gradient = ctx.createLinearGradient(0, 0, 400, 500);
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
+    gradient.addColorStop(1, 'rgba(147, 51, 234, 0.1)');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 800, 600);
-
-    // Add decorative circles
-    ctx.globalAlpha = 0.1;
-    ctx.fillStyle = '#a855f7';
-    ctx.beginPath();
-    ctx.arc(150, 150, 80, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(650, 450, 100, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.fillRect(0, 0, 400, 500);
 
     // Title
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Share Your Score', 200, 40);
+
+    // Load and draw profile picture
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve, reject) => {
+        img.onload = () => {
+          // Draw circular profile picture
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(200, 100, 30, 0, 2 * Math.PI);
+          ctx.clip();
+          ctx.drawImage(img, 170, 70, 60, 60);
+          ctx.restore();
+          
+          // Add border around profile picture
+          ctx.strokeStyle = '#a855f7';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(200, 100, 30, 0, 2 * Math.PI);
+          ctx.stroke();
+          
+          resolve(true);
+        };
+        img.onerror = () => {
+          // Fallback: draw a circle with initials
+          ctx.fillStyle = '#a855f7';
+          ctx.beginPath();
+          ctx.arc(200, 100, 30, 0, 2 * Math.PI);
+          ctx.fill();
+          
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 20px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(player.username.charAt(0).toUpperCase(), 200, 107);
+          
+          resolve(true);
+        };
+        img.src = player.profilePicture;
+      });
+    } catch (error) {
+      // Fallback for profile picture
+      ctx.fillStyle = '#a855f7';
+      ctx.beginPath();
+      ctx.arc(200, 100, 30, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(player.username.charAt(0).toUpperCase(), 200, 107);
+    }
+
+    // Username
     ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(player.username, 200, 150);
+
+    // Country
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '14px Arial';
+    ctx.fillText(`IN`, 200, 170);
+
+    // Score container (purple box)
+    ctx.fillStyle = '#6b21a8';
+    ctx.fillRect(30, 200, 340, 120);
+    
+    // Score container border
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(30, 200, 340, 120);
+
+    // Score
+    const scoreColor = bestScore >= 90 ? '#10b981' : bestScore >= 75 ? '#60a5fa' : bestScore >= 50 ? '#f59e0b' : '#ef4444';
+    ctx.fillStyle = scoreColor;
     ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Perfect Circle Challenge', 400, 80);
+    ctx.fillText(`${bestScore}/100`, 200, 250);
 
-    // Subtitle
-    ctx.fillStyle = '#a855f7';
-    ctx.font = '24px Arial';
-    ctx.fillText('Final Score Results', 400, 120);
-
-    // Player info section
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Player: ${player.username}`, 80, 180);
-
-    // Country flag and name
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#d1d5db';
-    ctx.fillText(`Country: ${player.country}`, 80, 220);
-
-    // Score display
-    ctx.fillStyle = bestScore >= 90 ? '#10b981' : bestScore >= 75 ? '#f59e0b' : bestScore >= 50 ? '#f97316' : '#ef4444';
-    ctx.font = 'bold 72px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${bestScore}`, 400, 320);
+    // Score message
+    const scoreMessage = bestScore >= 95 ? 'PERFECT MASTER!' : 
+                        bestScore >= 90 ? 'CIRCLE LEGEND!' : 
+                        bestScore >= 75 ? 'GREAT WORK!' : 
+                        bestScore >= 50 ? 'GOOD EFFORT!' : 'KEEP PRACTICING!';
     
     ctx.fillStyle = '#ffffff';
-    ctx.font = '32px Arial';
-    ctx.fillText('Final Score', 400, 360);
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText(scoreMessage, 200, 280);
 
-    // Attempts breakdown
-    ctx.fillStyle = '#d1d5db';
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText('Attempts:', 80, 420);
-    
-    attempts.forEach((attempt, index) => {
-      ctx.fillStyle = '#a855f7';
-      ctx.fillText(`${attempt.attempt}: ${attempt.score} pts`, 80 + (index * 150), 450);
-    });
-
-    // Score calculation note
+    // "Final Score" label
     ctx.fillStyle = '#9ca3af';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Score based on: Highest Score (40%) + Average (30%) + Consistency (20%) + Attempt Bonus', 400, 520);
+    ctx.font = '14px Arial';
+    ctx.fillText('Final Score', 200, 300);
 
-    // Branding
-    ctx.fillStyle = '#6366f1';
-    ctx.font = 'bold 20px Arial';
-    ctx.fillText('perfectcircle.game', 400, 560);
+    // Attempts info
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '14px Arial';
+    ctx.fillText(`Based on ${attempts.length} attempt${attempts.length > 1 ? 's' : ''}`, 200, 350);
+
+    // Website branding
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('perfectcircle.game', 200, 450);
 
     return canvas.toDataURL('image/png');
   };
 
-  const shareToTwitter = () => {
-    const imageData = generateShareImage();
+  const shareToTwitter = async () => {
+    const imageData = await generateShareImage();
     const text = `I scored ${bestScore}/100 in the Perfect Circle Challenge! 🎯\n\nCan you draw a better circle?\n\n#PerfectCircle #GameChallenge`;
     
     // Create a link element to download the image
@@ -115,8 +165,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({ player, bestScore, attem
     window.open(twitterUrl, '_blank');
   };
 
-  const shareToInstagram = () => {
-    const imageData = generateShareImage();
+  const shareToInstagram = async () => {
+    const imageData = await generateShareImage();
     
     // Create a link element to download the image
     const link = document.createElement('a');
@@ -128,8 +178,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({ player, bestScore, attem
     alert('Image downloaded! Open Instagram and upload this image to share your score.');
   };
 
-  const downloadImage = () => {
-    const imageData = generateShareImage();
+  const downloadImage = async () => {
+    const imageData = await generateShareImage();
     const link = document.createElement('a');
     link.download = 'perfect-circle-score.png';
     link.href = imageData;
@@ -139,7 +189,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ player, bestScore, attem
   const getScoreMessage = (score: number) => {
     if (score >= 95) return 'PERFECT MASTER!';
     if (score >= 90) return 'CIRCLE LEGEND!';
-    if (score >= 75) return 'GREAT ARTIST!';
+    if (score >= 75) return 'GREAT WORK!';
     if (score >= 50) return 'GOOD EFFORT!';
     return 'KEEP PRACTICING!';
   };
@@ -215,8 +265,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({ player, bestScore, attem
         <canvas
           ref={canvasRef}
           className="hidden"
-          width={800}
-          height={600}
+          width={400}
+          height={500}
         />
       </div>
     </div>
